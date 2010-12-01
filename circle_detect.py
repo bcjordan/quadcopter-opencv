@@ -1,5 +1,7 @@
+
 from opencv.cv import *
 from opencv.highgui import *
+
 size = cvSize(640, 480)
 
 hsv_frame = cvCreateImage(size, IPL_DEPTH_8U, 3)
@@ -12,7 +14,7 @@ hsv_max2 = cvScalar(256, 180, 256, 0)
 storage = cvCreateMemStorage(0)
 capture = cvCreateCameraCapture(0)
 frame = cvQueryFrame(capture)
-cvSaveImage("test.jpg", frame)
+#cvSaveImage("test.jpg", frame)
 
 # Convert to HSV for color matching
 cvCvtColor(frame, hsv_frame, CV_BGR2HSV)
