@@ -5,8 +5,9 @@ import os
 import time
 
 DEBUG = False
+CAMERA = False 
 VERBOSE_DEBUG = False
-CSV = False
+CSV = True
 
 # Check for serial connection, try and catch errors, try new card 
 ser = serial.Serial('/dev/null', 9600, timeout=1)
@@ -15,8 +16,8 @@ ser = serial.Serial('/dev/null', 9600, timeout=1)
 servoPos = 90
 
 # If we are currently 
-cvStartWindowThread()
-cvNamedWindow("camera")
+if CAMERA: cvStartWindowThread()
+if CAMERA: cvNamedWindow("camera")
 
 # Helper functions
 def servo(id, position):
@@ -85,7 +86,7 @@ while 1:
     if frame is not None:    
         # If we have a clean frame to work with        
         # Show our image in the GUI if we are debugging
-        if DEBUG: cvShowImage("camera", frame)
+        if CAMERA: cvShowImage("camera", frame)
         # cvSaveImage("test.jpg", frame)
 
         # Convert frame to HSV color format for color matching
@@ -118,7 +119,7 @@ while 1:
         if found: # If we have detected a ball
 
             if DEBUG: print "ball detected at position:",x,",",y," with radius ", maxRadius
-            if CSV: print x, ",", y, ",", maxRadius, ",", circles.total, ","#, time.time()
+            if CSV: print x, ",", y, ",", maxRadius, ",", circles.total, ",", time.time()
 
             if len(last_xs) == 5: del last_xs[0] # Remove first item
             last_xs.append(x)
