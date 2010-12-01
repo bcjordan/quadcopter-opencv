@@ -5,10 +5,10 @@ import os
 import time
 
 DEBUG = False
-CAMERA = False 
+CAMERA = True
 VERBOSE_DEBUG = False
 CSV = True
-CLEAN_FRAMES = False
+CLEAN_FRAMES = False 
 
 # Check for serial connection, try and catch errors, try new card 
 ser = serial.Serial('/dev/null', 9600, timeout=1)
@@ -99,7 +99,12 @@ while 1:
  
         # Smoothing improves Hough detector
         cvSmooth(thresholded, thresholded, CV_GAUSSIAN, 9, 9)
-        # Run HoughCircle detector. Calculates gradient and finds unique separated circles
+        # Run HoughCircle detector. Calculates gradient and returns unique separated circles
+        # Arguments are: image, storage, hough method, accumulator resolution
+        # (bigger is smaller), minimum distance btwn circles, hough canny
+        # edge detector threshold, center detection threshold (higher =
+        # larger circles only), minimum radius of circles, maximum radius
+        # of circles.
         circles = cvHoughCircles(thresholded, storage, CV_HOUGH_GRADIENT, 2, thresholded.height/4, 100, 40, 20, 200)
  
         # Analyze found circles array. Find best (in this case, largest) circle.
