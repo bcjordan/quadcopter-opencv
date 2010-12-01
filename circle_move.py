@@ -1,11 +1,8 @@
-// Tracking a pink Aibo ball
-// Copyright 2009 mechomaniac.com
- 
 from opencv.cv import *
 from opencv.highgui import *
 import serial
  
-ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
+ser = serial.Serial('/dev/null', 9600, timeout=1)
 servoPos = 90
  
 def servo(id, position):
@@ -27,7 +24,7 @@ storage = cvCreateMemStorage(0)
 capture = cvCreateCameraCapture(0)
 #cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 320)
 #cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 240)
-#cvSetCaptureProperty(capture, CV_CAP_PROP_FPS, 15)
+#cvSetCaptureProperty(capture, CV_CAP_PROP_FPS, 20)
  
  
 if not capture:
@@ -66,8 +63,9 @@ while 1:
                 y = circle[1]
  
         if found:
+
             print "ball detected at position:",x, ",", y, " with radius:", maxRadius
- 
+            ''' 
             if x > 420:
                 # need to pan right
                 servoPos += 5
@@ -78,6 +76,7 @@ while 1:
                 servoPos = max(40, servoPos)
                 servo(2, servoPos)
             print "servo position:", servoPos
+            '''
         else:
             print "no ball"
  
