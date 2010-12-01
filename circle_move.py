@@ -1,11 +1,14 @@
+import StringIO
+import sys
 from opencv.cv import *
 from opencv.highgui import *
 import serial
+import os
  
 ser = serial.Serial('/dev/null', 9600, timeout=1)
 servoPos = 90
-
-
+#my_errors = StringIO.StringIO()
+#sys.stderr = my_errors
 
 cvStartWindowThread()
 cvNamedWindow("camera")
@@ -35,16 +38,22 @@ capture = cvCreateCameraCapture(0)
 if not capture:
     print "Could not open webcam"
     sys.exit(1)
- 
+
+last_errors = os.path.getsize("geterrors")
+
 while 1:
     # get a frame from the webcam
     frame = cvQueryFrame(capture)
-    print "frame", frame
-    print cvShowImage("camera", frame)
+
+    if(os.path.getsize("geterrors") > last_errors):
+        print "More errors!"
+        last_errors = os.path.getsize("geterrors")
+        frame = None
 
     if frame is not None:
     #cvSaveImage("test.jpg", frame)
  
+        cvShowImage("camera", frame)
         # convert to HSV for color matching
         # as hue wraps around, we need to match it in 2 parts and OR together
         cvCvtColor(frame, hsv_frame, CV_BGR2HSV)
