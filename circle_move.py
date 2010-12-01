@@ -1,10 +1,12 @@
-import sys
 from opencv.cv import *
 from opencv.highgui import *
 import serial
 import os
+import time
 
-DEBUG = True
+DEBUG = False
+VERBOSE_DEBUG = False
+CSV = False
 
 # Check for serial connection, try and catch errors, try new card 
 ser = serial.Serial('/dev/null', 9600, timeout=1)
@@ -16,8 +18,16 @@ servoPos = 90
 cvStartWindowThread()
 cvNamedWindow("camera")
 
+# Helper functions
 def servo(id, position):
     ser.write("#S" + str(id) + str(position) + "#")
+
+def average(values):
+    """ Compute mean of values in a list of numbers. """
+    if len(values) == 0:
+        return None
+    else:
+        return sum(values,0.0) / len(values)
 
 size = cvSize(640, 480)
 hsv_frame = cvCreateImage(size, IPL_DEPTH_8U, 3)
@@ -68,7 +78,7 @@ while 1:
     # Check cleanliness of frame. If capture threw a jpeg corruption error,
     # throw our frame out.
     if(os.path.getsize("geterrors") > last_errors):
-        if DEBUG: print "More errors!"
+        if VERBOSE_DEBUG: print "More errors!"
         last_errors = os.path.getsize("geterrors")   # Update last error file size
         frame = None
 
@@ -92,7 +102,10 @@ while 1:
  
         # Analyze found circles array. Find best (in this case, largest) circle.
         maxRadius = x = y = 0
-
+        last_xs = []
+        last_ys = []
+        last_radii = []
+    
         found = False
         for i in range(circles.total):
             circle = circles[i]
@@ -102,9 +115,18 @@ while 1:
                 x = circle[0]
                 y = circle[1]
  
-        if found:     # If we have detected a ball
+        if found: # If we have detected a ball
 
-            if DEBUG: print "ball detected at position:",x, ",", y, " with radius:", maxRadius
+            if DEBUG: print "ball detected at position:",x,",",y," with radius ", maxRadius
+            if CSV: print x, ",", y, ",", maxRadius, ",", circles.total, ","#, time.time()
+
+            if len(last_xs) == 5: del last_xs[0] # Remove first item
+            last_xs.append(x)
+ 
+            if abs(average(last_xs)-x) > 40: # Then x is probably a bad measurement 
+                x = average(last_xs)
+                if DEBUG: print "ball fixed at position ",x,",",y," with radius ", maxRadius
+            
 
             # Communicate commands or location via serial cable
             ''' 
@@ -120,8 +142,11 @@ while 1:
             print "servo position:", servoPos
             '''
 
-        else:
-            print "no ball"
+#        else:
+#            print "no ball"
+             # Do nothing
 
 # Close serial connection 
 ser.close()
+
+
