@@ -8,7 +8,7 @@ DEBUG = False
 CAMERA = True
 VERBOSE_DEBUG = False
 CSV = True
-CLEAN_FRAMES = False 
+CLEAN_FRAMES = False
 
 # Check for serial connection, try and catch errors, try new card 
 ser = serial.Serial('/dev/null', 9600, timeout=1)
