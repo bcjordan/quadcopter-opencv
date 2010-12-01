@@ -8,6 +8,7 @@ DEBUG = False
 CAMERA = False 
 VERBOSE_DEBUG = False
 CSV = True
+CLEAN_FRAMES = False
 
 # Check for serial connection, try and catch errors, try new card 
 ser = serial.Serial('/dev/null', 9600, timeout=1)
@@ -81,7 +82,7 @@ while 1:
     if(os.path.getsize("geterrors") > last_errors):
         if VERBOSE_DEBUG: print "More errors!"
         last_errors = os.path.getsize("geterrors")   # Update last error file size
-        frame = None
+        if CLEAN_FRAMES: frame = None
 
     if frame is not None:    
         # If we have a clean frame to work with        
