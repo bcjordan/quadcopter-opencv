@@ -39,7 +39,8 @@ if not capture:
 while 1:
     # get a frame from the webcam
     frame = cvQueryFrame(capture)
-    cvShowImage("camera", frame)
+    print "frame", frame
+    print cvShowImage("camera", frame)
 
     if frame is not None:
     #cvSaveImage("test.jpg", frame)
