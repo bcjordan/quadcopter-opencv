@@ -5,7 +5,10 @@ import serial
 ser = serial.Serial('/dev/null', 9600, timeout=1)
 servoPos = 90
 
-cvNamedWindow("camera", 1)
+
+
+cvStartWindowThread()
+cvNamedWindow("camera")
 
 def servo(id, position):
     ser.write("#S" + str(id) + str(position) + "#")
