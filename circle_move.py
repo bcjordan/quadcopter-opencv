@@ -4,10 +4,12 @@ import serial
  
 ser = serial.Serial('/dev/null', 9600, timeout=1)
 servoPos = 90
- 
+
+cv.NamedWindow("camera", 1)
+
 def servo(id, position):
     ser.write("#S" + str(id) + str(position) + "#")
- 
+
 size = cvSize(640, 480)
 hsv_frame = cvCreateImage(size, IPL_DEPTH_8U, 3)
 thresholded = cvCreateImage(size, IPL_DEPTH_8U, 1)
@@ -34,7 +36,8 @@ if not capture:
 while 1:
     # get a frame from the webcam
     frame = cvQueryFrame(capture)
- 
+    cv.ShowImage("camera", frame)
+
     if frame is not None:
     #cvSaveImage("test.jpg", frame)
  
