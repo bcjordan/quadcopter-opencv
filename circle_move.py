@@ -5,7 +5,7 @@ import serial
 ser = serial.Serial('/dev/null', 9600, timeout=1)
 servoPos = 90
 
-cv.NamedWindow("camera", 1)
+cvNamedWindow("camera", 1)
 
 def servo(id, position):
     ser.write("#S" + str(id) + str(position) + "#")
@@ -36,7 +36,7 @@ if not capture:
 while 1:
     # get a frame from the webcam
     frame = cvQueryFrame(capture)
-    cv.ShowImage("camera", frame)
+    cvShowImage("camera", frame)
 
     if frame is not None:
     #cvSaveImage("test.jpg", frame)
