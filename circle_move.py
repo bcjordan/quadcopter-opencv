@@ -1,3 +1,14 @@
+# Quadrotor vision code
+# Usage: redirect standard error to the file "geterrors" like so:
+#        python circle_move.py 2> geterrors
+# Finds serial consoles and cameras as they are attached (serial first)
+# 
+# By Brian Jordan for COMP150 Behavior Based Robotics
+#   Used API at http://opencv.willowgarage.com/wiki/SwigPythonInterface 
+#   and circle detection tutorials at http://mechomaniac.com/robots 
+#   for reference.
+
+
 from opencv.cv import *
 from opencv.highgui import *
 import serial
@@ -11,18 +22,20 @@ CSV = True
 CLEAN_FRAMES = False
 
 # Check for serial connection, try and catch errors, try new card 
-ser = serial.Serial('/dev/null', 9600, timeout=1)
 
-# Initial values for sending commands to Arduino / copter
-servoPos = 90
+while True:
+    try:
+        copter = serial.Serial('/dev/tty-serial.*', 9600, timeout = 5)
+    except:
+        time.sleep(5)
 
 # If we are currently 
 if CAMERA: cvStartWindowThread()
 if CAMERA: cvNamedWindow("camera")
 
 # Helper functions
-def servo(id, position):
-    ser.write("#S" + str(id) + str(position) + "#")
+def serial(orientation, direction):
+    copter.write("#M" + str(id) + str(position) + "#")
 
 def average(values):
     """ Compute mean of values in a list of numbers. """
@@ -31,8 +44,10 @@ def average(values):
     else:
         return sum(values,0.0) / len(values)
 
+
+# Generate frame storage image areas using OpenCV API
 size = cvSize(640, 480)
-hsv_frame = cvCreateImage(size, IPL_DEPTH_8U, 3)
+hsv = cvCreateImage(size, IPL_DEPTH_8U, 3)
 thresholded = cvCreateImage(size, IPL_DEPTH_8U, 1)
 thresholded2 = cvCreateImage(size, IPL_DEPTH_8U, 1)
 
@@ -40,31 +55,29 @@ thresholded2 = cvCreateImage(size, IPL_DEPTH_8U, 1)
 # for our color matching.
 
 # Define red low hue upper and lower bounds 
-hsv_min = cvScalar(0, 50, 170, 0)
-hsv_max = cvScalar(10, 180, 256, 0)
+hsv_min = cvScalar(0, 40, 160, 0)
+hsv_max = cvScalar(10, 170, 256, 0)
 
 # Define red high hue upper and lower bounds
-hsv_min2 = cvScalar(170, 50, 170, 0)
-hsv_max2 = cvScalar(256, 180, 256, 0)
+hsv_min2 = cvScalar(160, 40, 160, 0)
+hsv_max2 = cvScalar(256, 170, 256, 0)
 
 # Allocate storage space for current frame and operations 
 storage = cvCreateMemStorage(0)
 
 # Initialize camera capture
-capture = cvCreateCameraCapture(0)
+while True:
+    try:
+        capture = cvCreateCameraCapture(0)
+        if capture:
+            break
+        else:
+            time.sleep(5) # Wait 5 seconds for next attempt
+    except:
+        time.sleep(5)
 
 # Set capture variables (still not implemented in either OpenCV API)
-# cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 320)
-# cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 240)
 # cvSetCaptureProperty(capture, CV_CAP_PROP_FPS, 20) 
-
-# Handle non-presence of webcam 
-#   Future TODO: loop this check and webcam initialization
-#                and audibly indicate success
-
-if not capture:
-    print "Could not open webcam"
-    sys.exit(1)
 
 # Read size of our error file. This is a hacky solution to bad frames caused
 # by unresolvable v4l jpeg decompression bugs. When this is run with the option 2> geterrors,
@@ -73,7 +86,7 @@ if not capture:
 last_errors = os.path.getsize("geterrors")
 
 # Run our main webcam capture, circle finding, and serial out loop
-while 1:
+while True:
     # Grab the current frame from our webcam capture
     frame = cvQueryFrame(capture)
 
@@ -91,7 +104,7 @@ while 1:
         # cvSaveImage("test.jpg", frame)
 
         # Convert frame to HSV color format for color matching
-        # as hue wraps around, we need to match it in 2 parts and OR together
+        # because hue wraps around, we need to match it in 2 parts and OR together
         cvCvtColor(frame, hsv_frame, CV_BGR2HSV)
         cvInRangeS(hsv_frame, hsv_min, hsv_max, thresholded)
         cvInRangeS(hsv_frame, hsv_min2, hsv_max2, thresholded2)
@@ -99,6 +112,7 @@ while 1:
  
         # Smoothing improves Hough detector
         cvSmooth(thresholded, thresholded, CV_GAUSSIAN, 9, 9)
+
         # Run HoughCircle detector. Calculates gradient and returns unique separated circles
         # Arguments are: image, storage, hough method, accumulator resolution
         # (bigger is smaller), minimum distance btwn circles, hough canny
@@ -108,17 +122,18 @@ while 1:
         circles = cvHoughCircles(thresholded, storage, CV_HOUGH_GRADIENT, 2, thresholded.height/4, 100, 40, 20, 200)
  
         # Analyze found circles array. Find best (in this case, largest) circle.
-        maxRadius = x = y = 0
+        radius = x = y = 0
+
+        # Store last 5 xs and ys for sudden change analysis
         last_xs = []
         last_ys = []
-        last_radii = []
-    
-        found = False
-        for i in range(circles.total):
-            circle = circles[i]
-            if circle[2] > maxRadius:
-                found = True
-                maxRadius = circle[2]
+
+        x = none 
+       
+        # Radius is best radius found, x is best x fond, y is best y found 
+        for circle in circles:
+            if circle[2] > radius:
+                radius = circle[2]
                 x = circle[0]
                 y = circle[1]
  
@@ -129,31 +144,29 @@ while 1:
 
             if len(last_xs) == 5: del last_xs[0] # Remove first item
             last_xs.append(x)
+            if len(last_ys) == 5: del last_ys[0] # Remove first item
+            last_ys.append(y)
  
             if abs(average(last_xs)-x) > 40: # Then x is probably a bad measurement 
                 x = average(last_xs)
-                if DEBUG: print "ball fixed at position ",x,",",y," with radius ", maxRadius
+                if DEBUG: print "ball fixed:",x,",",y
+            if abs(average(last_ys)-y) > 40: # Then y is probably a bad measurement 
+                y = average(last_ys)
+                if DEBUG: print "ball fixed:",x,",",y
             
 
             # Communicate commands or location via serial cable
-            ''' 
-            if x > 420:
-                # need to pan right
-                servoPos += 5
-                servoPos = min(140, servoPos)
-                servo(2, servoPos)
-            elif x < 220:
-                servoPos -= 5
-                servoPos = max(40, servoPos)
-                servo(2, servoPos)
-            print "servo position:", servoPos
-            '''
+            if x > 320:
+                # Copter must move right
+               serial("ROLL","RIGHT")
+            elif x < 320:
+               serial("ROLL","LEFT")
 
-#        else:
-#            print "no ball"
-             # Do nothing
+            if y > 240:
+                # Copter must move backwards 
+               serial("PITCH","FORWARD")
+            elif x < 240:
+               serial("PITCH","BACK")
 
-# Close serial connection 
-ser.close()
-
-
+arduino.close()
+# Stop taking frames from camera
