@@ -35,7 +35,7 @@ if CAMERA: cvNamedWindow("camera")
 
 # Helper functions
 def serial(orientation, direction):
-    copter.write("#M" + str(id) + str(position) + "#")
+    copter.write("#M" + orientation + direction + "#")
 
 def average(values):
     """ Compute mean of values in a list of numbers. """
@@ -165,8 +165,8 @@ while True:
             if y > 240:
                 # Copter must move backwards 
                serial("PITCH","FORWARD")
-            elif x < 240:
+            elif y < 240:
                serial("PITCH","BACK")
 
-arduino.close()
+copter.close()
 # Stop taking frames from camera
